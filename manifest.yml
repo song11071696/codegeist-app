@@ -39,10 +39,7 @@ modules:
       name: Fetch release issues
       function: fetchReleaseIssues
       actionVerb: GET
-      description: |
-        Fetches the Jira issues in a release, grouped into Breaking changes, New features, Improvements,
-        Bug fixes and Other, and returns them with a markdown release-notes draft. Provide projectKey and
-        fixVersion, or a JQL query. If only projectKey is given, the latest released (or next unreleased) version is used.
+      description: Fetches Jira issues in a release (projectKey + fixVersion, or JQL), grouped by type, with a markdown release-notes draft. With only projectKey, uses the latest version.
       inputs:
         projectKey:
           title: Project key
@@ -63,9 +60,7 @@ modules:
       name: Publish release notes to Confluence
       function: publishReleaseNotes
       actionVerb: CREATE
-      description: |
-        Creates a Confluence page with release notes in the given space. Pass the final markdown as content.
-        If content is empty, notes are generated automatically from projectKey + fixVersion or jql.
+      description: Creates a Confluence page with release notes in a space. Pass final markdown as content; if empty, notes are generated from projectKey + fixVersion or jql.
       inputs:
         spaceKey:
           title: Confluence space key
