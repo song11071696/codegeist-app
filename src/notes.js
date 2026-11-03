@@ -8,9 +8,9 @@ const GROUPS = [
   { id: 'other', title: 'Other changes' },
 ];
 
-const FEATURE_TYPES = ['story', 'epic', 'new feature', 'feature'];
-const IMPROVEMENT_TYPES = ['improvement', 'task', 'sub-task', 'subtask', 'enhancement', 'change'];
-const BUG_TYPES = ['bug', 'defect', 'incident', 'problem'];
+const FEATURE_TYPES = ['story', 'epic', 'new feature', 'feature', '故事', '长篇故事', '史诗', '新功能'];
+const IMPROVEMENT_TYPES = ['improvement', 'task', 'sub-task', 'subtask', 'enhancement', 'change', '任务', '子任务', '改进'];
+const BUG_TYPES = ['bug', 'defect', 'incident', 'problem', '缺陷', '故障', '错误'];
 const BREAKING_LABELS = ['breaking', 'breaking-change', 'breaking_change'];
 
 function quote(value) {
