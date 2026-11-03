@@ -1,0 +1,79 @@
+name: Forge deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: forge-deploy
+  cancel-in-progress: false
+
+env:
+  FORGE_EMAIL: ${{ secrets.FORGE_EMAIL }}
+  FORGE_API_TOKEN: ${{ secrets.FORGE_API_TOKEN }}
+  FORGE_DISABLE_TELEMETRY: "1"
+  FORGE_SITE: songdev1.atlassian.net
+  CI: "true"
+
+jobs:
+  deploy:
+    if: "!contains(github.event.head_commit.message, '[skip forge]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Forge CLI and deps
+        run: |
+          npm install -g @forge/cli@latest
+          npm install --no-audit --no-fund
+          forge --version
+          forge settings set usage-analytics false || true
+
+      - name: Unit self-test
+        run: npm test
+
+      - name: Who am I
+        run: forge whoami
+
+      - name: Register app if needed
+        run: |
+          if grep -qE '^\s+id:\s*ari:cloud:ecosystem' manifest.yml; then
+            echo "App already registered:"; grep -E '^\s+id:' manifest.yml
+          else
+            pip install --quiet pexpect
+            python3 scripts/register.py "Release Notes Copilot"
+            grep -E '^\s+id:' manifest.yml
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add manifest.yml
+            git commit -m "Register Forge app id [skip forge]"
+            git push
+          fi
+
+      - name: Lint
+        run: forge lint
+
+      - name: Deploy (development)
+        run: forge deploy -e development --non-interactive
+
+      - name: Install / upgrade on Jira
+        run: |
+          forge install --site "$FORGE_SITE" --product jira -e development --non-interactive --confirm-scopes \
+            || forge install --upgrade --site "$FORGE_SITE" --product jira -e development --non-interactive --confirm-scopes
+
+      - name: Install / upgrade on Confluence
+        run: |
+          forge install --site "$FORGE_SITE" --product confluence -e development --non-interactive --confirm-scopes \
+            || forge install --upgrade --site "$FORGE_SITE" --product confluence -e development --non-interactive --confirm-scopes
+
+      - name: Installations
+        if: always()
+        run: forge install list || true

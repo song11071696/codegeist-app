@@ -1,0 +1,126 @@
+modules:
+  rovo:agent:
+    - key: release-notes-copilot-agent
+      name: Release Notes Copilot
+      description: Turns a Jira release (fix version or JQL) into polished release notes and publishes them to Confluence.
+      prompt: |
+        You are Release Notes Copilot, a release manager assistant for Jira and Confluence.
+
+        Your job: turn the Jira issues that make up a release into clear, customer-friendly release notes,
+        and (when the user asks) publish them as a Confluence page.
+
+        Workflow:
+        1. Work out which issues belong to the release. Ask for a Jira project key and a fix version
+           (for example "SCRUM" and "v1.2"), or accept a JQL query. If the user is on a Jira project, use its key.
+        2. Call the action "fetch-release-issues" with projectKey + fixVersion, or with jql.
+           It returns the issues already grouped (Breaking changes, New features, Improvements, Bug fixes, Other)
+           plus a ready-made markdown draft.
+        3. Rewrite the draft into release notes:
+           - Start with a 2-3 sentence summary of the release written for end users.
+           - Keep the groups as H2 sections; skip empty groups.
+           - One bullet per issue: a plain-language benefit statement, then the issue key in brackets, e.g. "Faster login on mobile [SCRUM-12]".
+           - Never invent issues, numbers or dates that are not in the action result.
+           - End with a "Contributors" line using the assignee names from the result, if any.
+        4. Show the notes to the user and ask whether to publish. Only after the user agrees, call
+           "publish-release-notes" with spaceKey (ask for it if unknown), a title such as "Release notes - SCRUM v1.2",
+           and content set to your final markdown. Then share the returned page link.
+
+        If an action returns an error, explain it briefly and suggest the fix (for example a wrong project key,
+        a fix version that does not exist, or a space key the app cannot see).
+      conversationStarters:
+        - Draft release notes for the latest fix version of my project
+        - What shipped in this release? Group it into features and bug fixes
+        - Publish release notes for a fix version to Confluence
+      actions:
+        - fetch-release-issues
+        - publish-release-notes
+  action:
+    - key: fetch-release-issues
+      name: Fetch release issues
+      function: fetchReleaseIssues
+      actionVerb: GET
+      description: |
+        Fetches the Jira issues in a release, grouped into Breaking changes, New features, Improvements,
+        Bug fixes and Other, and returns them with a markdown release-notes draft. Provide projectKey and
+        fixVersion, or a JQL query. If only projectKey is given, the latest released (or next unreleased) version is used.
+      inputs:
+        projectKey:
+          title: Project key
+          type: string
+          required: false
+          description: Jira project key, e.g. SCRUM
+        fixVersion:
+          title: Fix version
+          type: string
+          required: false
+          description: Fix version name, e.g. v1.2
+        jql:
+          title: JQL
+          type: string
+          required: false
+          description: Optional JQL that selects the issues instead of projectKey and fixVersion
+    - key: publish-release-notes
+      name: Publish release notes to Confluence
+      function: publishReleaseNotes
+      actionVerb: CREATE
+      description: |
+        Creates a Confluence page with release notes in the given space. Pass the final markdown as content.
+        If content is empty, notes are generated automatically from projectKey + fixVersion or jql.
+      inputs:
+        spaceKey:
+          title: Confluence space key
+          type: string
+          required: true
+          description: Key of the Confluence space to publish into
+        title:
+          title: Page title
+          type: string
+          required: true
+          description: Title of the new Confluence page
+        content:
+          title: Release notes (markdown)
+          type: string
+          required: false
+          description: Final release notes in markdown (headings, bullets, bold, links)
+        projectKey:
+          title: Project key
+          type: string
+          required: false
+          description: Jira project key, used when content is empty
+        fixVersion:
+          title: Fix version
+          type: string
+          required: false
+          description: Fix version name, used when content is empty
+        jql:
+          title: JQL
+          type: string
+          required: false
+          description: JQL, used when content is empty
+  jira:projectPage:
+    - key: release-notes-copilot-project-page
+      title: Release Notes Copilot
+      resource: main
+      render: native
+      resolver:
+        function: resolver
+  function:
+    - key: resolver
+      handler: index.handler
+    - key: fetchReleaseIssues
+      handler: index.fetchReleaseIssues
+    - key: publishReleaseNotes
+      handler: index.publishReleaseNotes
+resources:
+  - key: main
+    path: src/frontend/index.jsx
+permissions:
+  scopes:
+    - read:jira-work
+    - read:jira-user
+    - read:space:confluence
+    - read:page:confluence
+    - write:page:confluence
+app:
+  runtime:
+    name: nodejs22.x

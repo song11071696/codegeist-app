@@ -1,0 +1,18 @@
+{
+  "name": "release-notes-copilot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Forge app: Rovo agent + Jira project page that turns Jira releases into Confluence release notes.",
+  "license": "MIT",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node scripts/selftest.mjs"
+  },
+  "dependencies": {
+    "@forge/api": "^8.4.0",
+    "@forge/react": "^12.4.0",
+    "@forge/resolver": "^2.0.2",
+    "react": "^18.3.1",
+    "@forge/bridge": "^7.2.1"
+  }
+}
