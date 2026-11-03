@@ -78,7 +78,11 @@ function toMarkdown({ title, summary, groups, contributors }) {
 
 function defaultSummary(total, groups, label) {
   if (!total) return `No issues were found for ${label}.`;
-  const counts = groups.map((g) => `${g.issues.length} ${g.title.toLowerCase()}`).join(', ');
+  const SINGULAR = { 'breaking changes': 'breaking change', 'new features': 'new feature', improvements: 'improvement', 'bug fixes': 'bug fix' };
+  const counts = groups.map((g) => {
+    const t = g.title.toLowerCase();
+    return `${g.issues.length} ${g.issues.length === 1 ? (SINGULAR[t] || t) : t}`;
+  }).join(', ');
   return `This release (${label}) includes ${total} change${total === 1 ? '' : 's'}: ${counts}.`;
 }
 
