@@ -122,5 +122,6 @@ permissions:
     - read:page:confluence
     - write:page:confluence
 app:
+  id: ari:cloud:ecosystem::app/3437f181-c4ee-445a-8acd-d7f24db1e0c1
   runtime:
     name: nodejs22.x
